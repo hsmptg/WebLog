@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Logger{% endblock %}   
+
+{% block page_content %}
+<div class="page-header">
+    <h1>Control Panel <span class="glyphicon glyphicon-flash" style='font-size: 50px'></span></h1>
+</div>
+<div class = "container">
+    <div class = "row">
+        <div id="Ctrls">
+            <input id="chkLog" type="checkbox" onclick="logging()">Logging<br>
+            <label id="lblFilename"></label><br>
+            <label id="lblSamples"></label><br>
+            <button id= "butShut" onclick="shutdown()">Shutdown</button><br>        
+            <label id="lblShut">Hit the Shutdown button to initiate the shutdown process</label><br>
+        </div>  
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+    <script type="text/javascript" src="../static/js/socket.io.min.js"></script>
+    
+    <script type="text/javascript" charset="utf-8">
+        namespace = '/test'; // change to an empty string to use the global namespace
+        var url = 'http://' + document.domain + ':' + location.port + namespace;
+        var socket = io.connect(url);
+    
+        function logging() {
+            state = $("#chkLog").is(':checked')
+            $('#butShut').prop('disabled', state);
+            socket.emit('Logging', {state: state});            
+        }
+        
+        function shutdown() {
+            $('#chkLog').prop('disabled', true);
+            $('#butShut').prop('disabled', true);
+            socket.emit('Shutdown', {state: true});
+            $("#lblShut").text("The system is shutting down! Turn off the power ONLY when the red LED is off!!!");
+            $("#lblShut").css('color', 'red');
+        }
+        
+        $(document).ready(function(){
+            var d = new Date();
+            var n = d.getTime();
+            socket.emit('Time', {millis: n});
+            
+            socket.on('msg', function(msg) {
+                $("#lblFilename").text(msg.filename)
+                $('#chkLog').prop('checked', (msg.filename != ""));
+                
+                if ((msg.samples != null) && ($("#chkLog").is(':checked')))
+                    $("#lblSamples").text(msg.samples + " samples");
+                else
+                    $("#lblSamples").text("");
+            });
+        });
+    </script>   
+{% endblock %}
