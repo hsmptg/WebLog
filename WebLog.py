@@ -5,7 +5,6 @@ import sys
 import os
 import signal #signal
 import boards
-#import pigpio
 import time
 import datetime
 from idlelib.IOBinding import filesystemencoding
@@ -28,22 +27,16 @@ def getFilename():
     f.close()
     return filename       
                 
-class WebGUI():
+class WebLog():
     def __init__(self):
         print("Started Logger WebGUI")
         signal.signal(signal.SIGINT, self.signal_handler)
         
-#        self.pi = pigpio.pi()
-#        self.pi.set_mode( 4, pigpio.OUTPUT) # LED
-#        self.pi.write(4, 0)
-#        self.pi.set_mode(18, pigpio.OUTPUT) # LED
-#        self.pi.write(18, 0)
-
         app = Flask(__name__)
         Bootstrap(app)        
         app.config['DEBUG'] = False
         self.socketio = SocketIO(app)
-        self.counter = -1;
+        self.counter = -1
         self.nSamples = 0
         self.bLogging = False
 
@@ -88,22 +81,16 @@ class WebGUI():
             files.sort()
             filex = []
             for file in files:
-#                print(abs_path + "/" + file)
                 (mode, ino, dev, nlink, uid, gid, size, atime, mtime, ctime) = os.stat(abs_path + "/" + file)
                 dat = datetime.datetime.fromtimestamp(ctime)
-#                print("{} - {}".format(file, dat))
                 if file <> "num.dat":
                     filex.append([file, "{}".format(dat)])
-#            print(filex)
-            
-#            return render_template('files.html', files=files, test=[['a', 'b'], ['c', 'd']])
             return render_template('files.html', files=filex)
         
         @self.socketio.on('Shutdown', namespace='/test')
         def shutdown(message):
             print("Shutting down...")
-#            self.pi.write(4, 1)
-            os.system("sudo shutdown -h now")    
+            os.system("sudo shutdown -h now")
             self.exit()   
                                         
         @self.socketio.on('Logging', namespace='/test')
@@ -126,8 +113,6 @@ class WebGUI():
         self.exit()
 
     def exit(self):
-#        self.pi.stop()
-#        self.board.disconnect()
         sys.exit(0)
 
     def onMsg(self, msg):
@@ -146,8 +131,6 @@ class WebGUI():
         print("Start logging")
         self.filename = getFilename()
         self.file = open("/home/pi/logger/static/data/" + self.filename, "w")
-#        self.pi.set_PWM_dutycycle(18, 50)
-#        self.pi.set_PWM_frequency(18, 1)
         self.nSamples = 0
         self.socketio.emit('msg', {'filename': self.filename, 'samples': self.nSamples}, namespace='/test')
         self.bLogging = True
@@ -160,8 +143,6 @@ class WebGUI():
         self.filename = ""
         self.socketio.emit('msg', {'filename': self.filename}, namespace='/test')
         self.file.close()
-#        self.pi.write(18, 0)
-#        self.pi.write(4, 0)
-        
+
 if __name__ == '__main__':
-    gui = WebGUI()
+    gui = WebLog()
